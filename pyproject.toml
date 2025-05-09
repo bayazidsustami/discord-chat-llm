@@ -1,0 +1,7 @@
+[project]
+name = "discord-llm"
+version = "0.1.0"
+description = "A discord bot to communicate with llm"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
