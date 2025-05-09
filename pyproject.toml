@@ -1,7 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "discord-llm"
 version = "0.1.0"
-description = "A discord bot to communicate with llm"
+description = "Discord bot that uses AWS Bedrock LLM to respond to messages"
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = []
+requires-python = ">=3.8"
+license = {text = "MIT"}
+dependencies = [
+    "discord.py>=2.0.0",
+    "python-dotenv",
+    "boto3",
+]
+
+[tool.setuptools]
+packages = ["discord_llm"]
+
+[project.scripts]
+discord-llm = "discord_llm.bot:main"
