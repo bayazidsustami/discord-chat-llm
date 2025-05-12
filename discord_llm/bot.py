@@ -9,6 +9,7 @@ from config.settings import (
     BEDROCK_SECRET_ACCESS_KEY,
     BEDROCK_REGION,
     BEDROCK_DEFAULT_MODELS,
+    SYSTEM_PROMPT
 )
 
 
@@ -22,10 +23,6 @@ bedrock_runtime = boto3.client(
     aws_access_key_id=BEDROCK_ACCESS_KEY_ID,
     aws_secret_access_key=BEDROCK_SECRET_ACCESS_KEY,
 )
-
-SYSTEM_PROMPT = """You are a helpful assistant integrated into a Discord bot. 
-Keep your responses concise and under 2000 characters to fit Discord's message length limitations.
-If a response needs to be longer, split it into multiple parts or summarize effectively."""
 
 @bot.event
 async def on_ready():
@@ -79,9 +76,8 @@ async def on_message(message):
             return
         
         try:
-            print(f"Processing message: {content}")
             async with message.channel.typing():
-                ai_response = await process_ai_response(content)
+                ai_response = await process_ai_response(message.content)
                 await message.channel.send(ai_response)
         
         except Exception as e:
