@@ -1,17 +1,16 @@
 import os
 import discord
 from discord.ext import commands
-from dotenv import load_dotenv
 import boto3
 import json
+from config.settings import (
+    DISCORD_TOKEN,
+    BEDROCK_ACCESS_KEY_ID,
+    BEDROCK_SECRET_ACCESS_KEY,
+    BEDROCK_REGION,
+    BEDROCK_DEFAULT_MODELS,
+)
 
-load_dotenv()
-DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
-GUILD_ID = int(os.getenv("GUILD_ID"))
-BEDROCK_ACCESS_KEY_ID = os.getenv("BEDROCK_ACCESS_KEY_ID")
-BEDROCK_SECRET_ACCESS_KEY = os.getenv("BEDROCK_SECRET_ACCESS_KEY")
-BEDROCK_REGION = os.getenv("BEDROCK_REGION")
-BEDROCK_DEFAULT_MODELS = os.getenv("BEDROCK_DEFAULT_MODELS")
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -31,7 +30,6 @@ If a response needs to be longer, split it into multiple parts or summarize effe
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
-    print(f"Bot is connected to guild ID: {GUILD_ID}")
 
 @bot.event
 async def on_message(message):
