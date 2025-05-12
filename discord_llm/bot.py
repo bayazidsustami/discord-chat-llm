@@ -1,8 +1,6 @@
-import os
 import discord
 from discord.ext import commands
 import boto3
-import json
 from config.settings import (
     DISCORD_TOKEN,
     BEDROCK_ACCESS_KEY_ID,
@@ -11,6 +9,7 @@ from config.settings import (
     BEDROCK_DEFAULT_MODELS,
     SYSTEM_PROMPT
 )
+from discord_llm.models.model_handler import BedrockModelHandler
 
 
 intents = discord.Intents.default()
@@ -24,6 +23,8 @@ bedrock_runtime = boto3.client(
     aws_secret_access_key=BEDROCK_SECRET_ACCESS_KEY,
 )
 
+model_handler = BedrockModelHandler(bedrock_runtime, SYSTEM_PROMPT)
+
 @bot.event
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
@@ -34,34 +35,9 @@ async def extract_message_content(message):
     content = content.replace(f'<@!{bot.user.id}>', '').strip()
     return content
 
-async def process_ai_response(content):
+async def process_ai_response(content, model_id=BEDROCK_DEFAULT_MODELS):
     """Process message with AWS Bedrock and get AI response"""
-    payload = {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 1000,
-        "system": SYSTEM_PROMPT,
-        "messages": [
-            {"role": "user", "content": content}
-        ]
-    }
-    
-    response = bedrock_runtime.invoke_model(
-        modelId=BEDROCK_DEFAULT_MODELS,
-        body=json.dumps(payload)
-    )
-    
-    return parse_ai_response(response)
-
-def parse_ai_response(response):
-    """Parse the response from AWS Bedrock"""
-    response_body = json.loads(response.get("body").read())
-    
-    if "completion" in response_body:
-        return response_body.get("completion")
-    elif "content" in response_body:
-        return response_body.get("content")[0].get("text")
-    else:
-        return str(response_body)
+    return await model_handler.process_request(content, model_id)
 
 @bot.event
 async def on_message(message):
@@ -77,7 +53,7 @@ async def on_message(message):
         
         try:
             async with message.channel.typing():
-                ai_response = await process_ai_response(message.content)
+                ai_response = await process_ai_response(content)
                 await message.channel.send(ai_response)
         
         except Exception as e:
