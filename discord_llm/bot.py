@@ -6,8 +6,7 @@ from config.settings import (
     BEDROCK_ACCESS_KEY_ID,
     BEDROCK_SECRET_ACCESS_KEY,
     BEDROCK_REGION,
-    BEDROCK_DEFAULT_MODELS,
-    SYSTEM_PROMPT
+    BEDROCK_DEFAULT_MODELS
 )
 from discord_llm.models.model_handler import BedrockModelHandler
 
@@ -23,7 +22,7 @@ bedrock_runtime = boto3.client(
     aws_secret_access_key=BEDROCK_SECRET_ACCESS_KEY,
 )
 
-model_handler = BedrockModelHandler(bedrock_runtime, SYSTEM_PROMPT)
+model_handler = BedrockModelHandler(bedrock_runtime)
 
 @bot.event
 async def on_ready():

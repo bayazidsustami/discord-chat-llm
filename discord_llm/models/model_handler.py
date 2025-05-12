@@ -1,10 +1,14 @@
 import json
 
+SYSTEM_PROMPT = """You are a helpful assistant integrated into a Discord bot with usernaem GarfieldBuddy#5116, if someone ask your name your name is Garfield Buddy. 
+Keep your responses concise and under 2000 characters to fit Discord's message length limitations.
+If a response needs to be longer, split it into multiple parts or summarize effectively."""
+
 class BedrockModelHandler:
     
-    def __init__(self, bedrock_runtime, system_prompt):
+    def __init__(self, bedrock_runtime):
         self.bedrock_runtime = bedrock_runtime
-        self.system_prompt = system_prompt
+        self.system_prompt = SYSTEM_PROMPT
     
     def get_payload(self, content, model_id):
         model_id_lower = model_id.lower()
@@ -22,7 +26,7 @@ class BedrockModelHandler:
             return {
                 "prompt": f"{self.system_prompt}\n\nUser: {content}\nAssistant:",
                 "max_gen_len": 1000,
-                "temperature": 0.7,
+                "temperature": 0.8,
             }
         elif "titan" in model_id_lower:
             return {
