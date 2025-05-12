@@ -31,58 +31,64 @@ If a response needs to be longer, split it into multiple parts or summarize effe
 async def on_ready():
     print(f"{bot.user.name} has connected to Discord!")
 
+async def extract_message_content(message):
+    """Extract message content without the bot mention"""
+    content = message.content.replace(f'<@{bot.user.id}>', '').strip()
+    content = content.replace(f'<@!{bot.user.id}>', '').strip()
+    return content
+
+async def process_ai_response(content):
+    """Process message with AWS Bedrock and get AI response"""
+    payload = {
+        "anthropic_version": "bedrock-2023-05-31",
+        "max_tokens": 1000,
+        "system": SYSTEM_PROMPT,
+        "messages": [
+            {"role": "user", "content": content}
+        ]
+    }
+    
+    response = bedrock_runtime.invoke_model(
+        modelId=BEDROCK_DEFAULT_MODELS,
+        body=json.dumps(payload)
+    )
+    
+    return parse_ai_response(response)
+
+def parse_ai_response(response):
+    """Parse the response from AWS Bedrock"""
+    response_body = json.loads(response.get("body").read())
+    
+    if "completion" in response_body:
+        return response_body.get("completion")
+    elif "content" in response_body:
+        return response_body.get("content")[0].get("text")
+    else:
+        return str(response_body)
+
 @bot.event
 async def on_message(message):
     if message.author == bot.user:
         return
     
-    await bot.process_commands(message)
-
-@bot.command(name="chat")
-async def chat(ctx, *, user_input=None):
-    """Process user input and get response from AWS Bedrock"""
-    if user_input is None:
-        await ctx.send("Please provide a message after `!chat`. For example: `!chat Tell me a joke.`")
-        return
+    if bot.user.mentioned_in(message) and not message.mention_everyone:
+        content = await extract_message_content(message)
         
-    try:
-        async with ctx.typing():
-            
-            payload = {
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1000,
-                "system": SYSTEM_PROMPT,
-                "messages": [
-                    {"role": "user", "content": user_input}
-                ]
-            }
-            
-            response = bedrock_runtime.invoke_model(
-                modelId=BEDROCK_DEFAULT_MODELS,
-                body=json.dumps(payload)
-            )
-            
-            response_body = json.loads(response.get("body").read())
-            
-            if "completion" in response_body:
-                ai_response = response_body.get("completion")
-            elif "content" in response_body:
-                ai_response = response_body.get("content")[0].get("text")
-            else:
-                ai_response = str(response_body) 
-            
-            await ctx.send(ai_response)
+        if not content:
+            await message.channel.send("How can I help you?")
+            return
+        
+        try:
+            print(f"Processing message: {content}")
+            async with message.channel.typing():
+                ai_response = await process_ai_response(content)
+                await message.channel.send(ai_response)
+        
+        except Exception as e:
+            await message.channel.send(f"Error processing your request: {str(e)}")
+            print(f"Error: {str(e)}")
     
-    except Exception as e:
-        await ctx.send(f"Error processing your request: {str(e)}")
-        print(f"Error: {str(e)}")
-
-@chat.error
-async def chat_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.send("Please provide a message after `!chat`. For example: `!chat Tell me a joke.`")
-    else:
-        await ctx.send(f"An error occurred: {str(error)}")
+    await bot.process_commands(message)
 
 def main():
     bot.run(DISCORD_TOKEN)
