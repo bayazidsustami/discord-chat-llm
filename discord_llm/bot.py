@@ -78,7 +78,6 @@ async def on_message(message):
         
         except Exception as e:
             await message.channel.send(f"Error processing your request: {str(e)}")
-            print(f"Error: {str(e)}")
     
     await bot.process_commands(message)
 
@@ -93,13 +92,12 @@ async def image(ctx, *, prompt: str):
                 image_data = base64.b64decode(response_body["images"][0])
                 file = discord.File(io.BytesIO(image_data), filename="generated_image.png")
 
-                await ctx.send(f"Generated image for: **{prompt}**", file=file)
+                await ctx.reply(f"Generated image for: **{prompt}**", file=file)
             else:
-                await ctx.send(f"Failed to generate image. No image data returned.")
+                await ctx.reply(f"Failed to generate image. No image data returned.")
 
     except Exception as e:
         await ctx.send(f"Error generating image: {str(e)}")
-        print(f"Error: {str(e)}")
 
 def main():
     bot.run(DISCORD_TOKEN)
