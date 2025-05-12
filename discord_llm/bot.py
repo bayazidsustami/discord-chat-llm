@@ -13,7 +13,7 @@ from discord_llm.models.model_handler import BedrockModelHandler
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix="/", intents=intents)
 
 bedrock_runtime = boto3.client(
     service_name="bedrock-runtime",
@@ -43,7 +43,26 @@ async def on_message(message):
     if message.author == bot.user:
         return
     
-    if bot.user.mentioned_in(message) and not message.mention_everyone:
+    if message.content.startswith("/"):
+        await bot.process_commands(message)
+        return
+    
+    if isinstance(message.channel, discord.DMChannel):
+        content = message.content.strip()
+        
+        if not content:
+            await message.channel.send("How can I help you?")
+            return
+        
+        try:
+            async with message.channel.typing():
+                ai_response = await process_ai_response(content)
+                await message.channel.send(ai_response)
+        except Exception as e:
+            await message.channel.send(f"Error processing your request: {str(e)}")
+            print(f"Error: {str(e)}")
+    
+    elif bot.user.mentioned_in(message) and not message.mention_everyone:
         content = await extract_message_content(message)
         
         if not content:
