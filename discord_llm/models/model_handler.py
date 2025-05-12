@@ -1,4 +1,5 @@
 import json
+import random
 
 SYSTEM_PROMPT = """You are a helpful assistant integrated into a Discord bot with usernaem GarfieldBuddy#5116, if someone ask your name your name is Garfield Buddy. 
 Keep your responses concise and under 2000 characters to fit Discord's message length limitations.
@@ -76,3 +77,29 @@ class BedrockModelHandler:
         )
         
         return self.parse_response(response, model_id)
+    
+    async def process_image_request(self, prompt: str):
+        # Prepare the request body for the Titan Image Generator
+        request_body = {
+            "taskType": "TEXT_IMAGE",
+            "textToImageParams": {
+                "text": prompt,
+                "negativeText": "low quality, blurry, distorted, deformed, disfigured, bad anatomy, poorly drawn, ugly, duplicate, morbid, mutilated, extra limbs, weird colors, watermark, signature, text, logo",  # Optional negative prompt
+            },
+            "imageGenerationConfig": {
+                "numberOfImages": 1,
+                "quality": "standard",
+                "cfgScale": 8.0,
+                "height": 1024,
+                "width": 1024,
+                "seed": random.randint(0, 2147483647),
+            }
+        }
+        
+        response = self.bedrock_runtime.invoke_model(
+            modelId="amazon.titan-image-generator-v1",
+            body=json.dumps(request_body)
+        )
+        
+        return json.loads(response["body"].read())
+

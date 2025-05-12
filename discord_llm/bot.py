@@ -1,6 +1,8 @@
 import discord
 from discord.ext import commands
 import boto3
+import base64
+import io
 from config.settings import (
     DISCORD_TOKEN,
     BEDROCK_ACCESS_KEY_ID,
@@ -79,6 +81,25 @@ async def on_message(message):
             print(f"Error: {str(e)}")
     
     await bot.process_commands(message)
+
+@bot.command()
+async def image(ctx, *, prompt: str):
+    """Generate an image based on a prompt"""
+    try:
+        async with ctx.typing():
+            response_body = await model_handler.process_image_request(prompt)
+
+            if "images" in response_body:
+                image_data = base64.b64decode(response_body["images"][0])
+                file = discord.File(io.BytesIO(image_data), filename="generated_image.png")
+
+                await ctx.send(f"Generated image for: **{prompt}**", file=file)
+            else:
+                await ctx.send(f"Failed to generate image. No image data returned.")
+
+    except Exception as e:
+        await ctx.send(f"Error generating image: {str(e)}")
+        print(f"Error: {str(e)}")
 
 def main():
     bot.run(DISCORD_TOKEN)
