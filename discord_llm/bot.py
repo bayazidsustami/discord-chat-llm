@@ -92,7 +92,7 @@ async def image(ctx, *, prompt: str):
                 image_data = base64.b64decode(response_body["images"][0])
                 file = discord.File(io.BytesIO(image_data), filename="generated_image.png")
 
-                await ctx.reply(f"Generated image for: **{prompt}**", file=file)
+                await ctx.reply(f"Generated image : ", file=file)
             else:
                 await ctx.reply(f"Failed to generate image. No image data returned.")
 
