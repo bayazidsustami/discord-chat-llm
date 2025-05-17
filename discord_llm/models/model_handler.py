@@ -78,26 +78,19 @@ class BedrockModelHandler:
         
         return self.parse_response(response, model_id)
     
-    async def process_image_request(self, prompt: str):
-        # Prepare the request body for the Titan Image Generator
+    async def process_image_request(self, prompt: str, style: str = None):
+        seed = random.randint(0, 4294967295)
+            
         request_body = {
-            "taskType": "TEXT_IMAGE",
-            "textToImageParams": {
-                "text": prompt,
-                "negativeText": "low quality, blurry, distorted, deformed, disfigured, bad anatomy, poorly drawn, ugly, duplicate, morbid, mutilated, extra limbs, weird colors, watermark, signature, text, logo",  # Optional negative prompt
-            },
-            "imageGenerationConfig": {
-                "numberOfImages": 1,
-                "quality": "standard",
-                "cfgScale": 8.0,
-                "height": 1024,
-                "width": 1024,
-                "seed": random.randint(0, 2147483647),
-            }
+            "text_prompts": [{"text": prompt}],
+            "style_preset": style,
+            "seed": seed,
+            "cfg_scale": 10,
+            "steps": 30,
         }
         
         response = self.bedrock_runtime.invoke_model(
-            modelId="amazon.titan-image-generator-v1",
+            modelId="stability.stable-diffusion-xl-v1",
             body=json.dumps(request_body)
         )
         
