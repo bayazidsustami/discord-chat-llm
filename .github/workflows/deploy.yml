@@ -45,10 +45,18 @@ jobs:
             echo "Alternative deployment completed"
           fi
           
-          echo "Checking sudo permissions..."
+      - name: Create .env file
+        run: |
+          echo "Creating .env file on server..."
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ${{ secrets.SERVER_PATH }}/.env << ${{ secrets.ENV_CONTENT }} && echo 'Environment variables set successfully' || echo 'Failed to create .env file'"
+          echo ".env file created successfully"
+          
+      - name: Checking sudo permissions...
+        run: |
           ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo -n true && echo 'Sudo access available without password' || echo 'Sudo requires password, please update sudoers file'"
           
-          echo "Restarting service..."
+      - name: Restarting service...
+        run: |
           ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl restart discordllm.service || echo 'Failed to restart service'"
         
       - name: Verify service status
