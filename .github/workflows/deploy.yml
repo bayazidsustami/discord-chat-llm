@@ -18,15 +18,32 @@ jobs:
           chmod 600 ~/.ssh/deploy_key.pem
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
-      - name: Check server connection
+      - name: Install rsync
         run: |
-          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+          echo "Installing rsync..."
+          sudo apt-get update
+          sudo apt-get install -y rsync
+          rsync --version
+        
+      - name: Check server connection and rsync availability
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful' && command -v rsync || echo 'rsync not available on remote server'"
       
       - name: Deploy to server
         run: |
-          echo "Starting rsync deployment..."
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --exclude '.git' --exclude '.github' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
-          echo "Rsync completed successfully"
+          echo "Starting deployment..."
+          if rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --exclude '.git' --exclude '.github' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}; then
+            echo "Rsync completed successfully"
+          else
+            echo "Rsync failed, using alternative approach with tar..."
+            
+            tar --exclude='.git' --exclude='.github' -czf /tmp/deploy.tar.gz .
+            
+            scp -i ~/.ssh/deploy_key.pem /tmp/deploy.tar.gz ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/tmp/
+            
+            ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd ${{ secrets.SERVER_PATH }} && tar -xzf /tmp/deploy.tar.gz && rm /tmp/deploy.tar.gz"
+            echo "Alternative deployment completed"
+          fi
           
           echo "Checking sudo permissions..."
           ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo -n true && echo 'Sudo access available without password' || echo 'Sudo requires password, please update sudoers file'"
