@@ -12,11 +12,21 @@ from config.settings import (
 )
 
 from discord_llm.models.model_handler import BedrockModelHandler
+from discord_llm.help import setup_help_command
 
 
 intents = discord.Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents)
+
+bot = commands.Bot(
+    command_prefix="/", 
+    intents=intents, 
+    help_command=None,
+    description="A Discord bot that uses AWS Bedrock to respond to user messages."
+)
+
+bot.remove_command("help")
+setup_help_command(bot)
 
 bedrock_runtime = boto3.client(
     service_name="bedrock-runtime",
@@ -46,7 +56,7 @@ async def on_message(message):
     if message.author == bot.user:
         return
     
-    if message.content.startswith("!"):
+    if message.content.startswith("/"):
         await bot.process_commands(message)
         return
     
@@ -82,7 +92,7 @@ async def on_message(message):
     
     await bot.process_commands(message)
 
-@bot.command(name="image", help="Generate an image based on a prompt")
+@bot.command(name="image", help="Generate an image based on a prompt. Optional: prefix with style: (e.g. 'pixel-art: a house')")
 async def image(ctx, *, prompt: str):
     try:
         async with ctx.typing():
@@ -114,6 +124,49 @@ async def image(ctx, *, prompt: str):
 
     except Exception as e:
         await ctx.reply(f"Error generating image: {str(e)}")
+
+@bot.command(name="models", help="List all available AI models that can be used")
+async def models(ctx):
+    try:
+        available_models = await model_handler.list_available_models()
+        
+        embed = discord.Embed(
+            title="Available AI Models",
+            description="Here are the models you can use:",
+            color=discord.Color.blue()
+        )
+        
+        for model in available_models:
+            embed.add_field(name=model["name"], value=model["description"], inline=False)
+        
+        await ctx.send(embed=embed)
+    except Exception as e:
+        await ctx.send(f"Error fetching models: {str(e)}")
+
+@bot.command(name="about", help="Show information about this bot")
+async def about(ctx):
+    """Display information about the bot and its capabilities"""
+    embed = discord.Embed(
+        title="About Discord LLM Bot",
+        description="I'm a Discord bot that uses AWS Bedrock to provide AI-powered chat and image generation capabilities.",
+        color=discord.Color.blue()
+    )
+    
+    embed.add_field(
+        name="Features",
+        value="• AI chat responses when mentioned\n• Direct message chat support\n• Image generation\n• Multiple AI model support",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="Usage",
+        value="• Chat with me by mentioning me in a channel\n• Send me direct messages\n• Use `!image` to generate images\n• Use `!help` to see all commands",
+        inline=False
+    )
+    
+    embed.set_footer(text="Powered by AWS Bedrock")
+    
+    await ctx.send(embed=embed)
 
 def main():
     bot.run(DISCORD_TOKEN)
