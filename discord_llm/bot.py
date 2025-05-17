@@ -26,7 +26,6 @@ bot = commands.Bot(
 )
 
 bot.remove_command("help")
-setup_help_command(bot)
 
 bedrock_runtime = boto3.client(
     service_name="bedrock-runtime",
@@ -124,6 +123,89 @@ async def image(ctx, *, prompt: str):
 
     except Exception as e:
         await ctx.reply(f"Error generating image: {str(e)}")
+
+@bot.command(name="fact", help="Get a random Garfield fact")
+async def fact(ctx):
+    try:
+        async with ctx.typing():
+            prompt = "Generate a fun, interesting fact about Garfield the cat. Keep it brief and entertaining."
+            ai_response = await process_ai_response(prompt)
+            await ctx.reply(ai_response)
+    except Exception as e:
+        await ctx.reply(f"Error generating Garfield fact: {str(e)}")
+
+@bot.command(name="quote", help="Get a random Garfield quote")
+async def quote(ctx):
+    try:
+        async with ctx.typing():
+            prompt = "Generate a funny, authentic-sounding quote that Garfield the cat would say. Make it short and witty."
+            ai_response = await process_ai_response(prompt)
+            await ctx.reply(ai_response)
+    except Exception as e:
+        await ctx.reply(f"Error generating Garfield quote: {str(e)}")
+
+@bot.command(name="lasagna", help="Get a lasagna recipe")
+async def lasagna(ctx):
+    try:
+        async with ctx.typing():
+            prompt = "Generate a delicious lasagna recipe that Garfield would love. Include ingredients and brief preparation steps."
+            ai_response = await process_ai_response(prompt)
+            await ctx.reply(ai_response)
+    except Exception as e:
+        await ctx.reply(f"Error generating lasagna recipe: {str(e)}")
+
+@bot.command(name="joke", help="Get a Garfield-style joke")
+async def joke(ctx):
+    try:
+        async with ctx.typing():
+            prompt = "Tell a funny joke in the style of Garfield comics. Keep it short and in Garfield's sarcastic tone."
+            ai_response = await process_ai_response(prompt)
+            await ctx.reply(ai_response)
+    except Exception as e:
+        await ctx.reply(f"Error generating Garfield joke: {str(e)}")
+
+@bot.command(name="monday", help="Express Garfield's feelings about Mondays")
+async def monday(ctx):
+    try:
+        async with ctx.typing():
+            prompt = "Express Garfield's hatred for Mondays in his own words. Make it funny and dramatic."
+            ai_response = await process_ai_response(prompt)
+            await ctx.reply(ai_response)
+    except Exception as e:
+        await ctx.reply(f"Error generating Monday rant: {str(e)}")
+
+@bot.command(name="ping", help="Check if the bot is online")
+async def ping(ctx):
+    await ctx.reply("Pong! 🏓")
+
+@bot.command(name="help", help="Show this help message")
+async def help_command(ctx):
+    """Display help information for the bot"""
+    embed = discord.Embed(
+        title="Help - Discord LLM Bot",
+        description="Here are the commands you can use:",
+        color=discord.Color.blue()
+    )
+    
+    embed.add_field(
+        name="/image <prompt>",
+        value="Generate an image based on a prompt. Optional: prefix with style: (e.g. 'pixel-art: a house')",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="/models",
+        value="List all available AI models that can be used.",
+        inline=False
+    )
+    
+    embed.add_field(
+        name="/about",
+        value="Show information about this bot.",
+        inline=False
+    )
+    
+    await ctx.send(embed=embed)
 
 @bot.command(name="models", help="List all available AI models that can be used")
 async def models(ctx):
