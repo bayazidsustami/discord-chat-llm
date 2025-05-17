@@ -1,0 +1,33 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches: [ main ]  
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key.pem
+          chmod 600 ~/.ssh/deploy_key.pem
+          ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        
+      - name: Deploy to server
+        run: |
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --exclude '.git' --exclude '.github' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
+          
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl restart discordllm.service"
+        
+      - name: Verify service status
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl status discordllm.service"
+          
+      - name: Clean up SSH key
+        run: rm ~/.ssh/deploy_key.pem
+        if: always()
