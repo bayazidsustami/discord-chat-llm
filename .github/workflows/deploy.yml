@@ -18,15 +18,25 @@ jobs:
           chmod 600 ~/.ssh/deploy_key.pem
           ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
         
+      - name: Check server connection
+        run: |
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo 'SSH connection successful'"
+      
       - name: Deploy to server
         run: |
+          echo "Starting rsync deployment..."
           rsync -avz -e "ssh -i ~/.ssh/deploy_key.pem" --exclude '.git' --exclude '.github' ./ ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.SERVER_PATH }}
+          echo "Rsync completed successfully"
           
-          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl restart discordllm.service"
+          echo "Checking sudo permissions..."
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo -n true && echo 'Sudo access available without password' || echo 'Sudo requires password, please update sudoers file'"
+          
+          echo "Restarting service..."
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl restart discordllm.service || echo 'Failed to restart service'"
         
       - name: Verify service status
         run: |
-          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl status discordllm.service"
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "sudo systemctl status discordllm.service || echo 'Service status check failed'"
           
       - name: Clean up SSH key
         run: rm ~/.ssh/deploy_key.pem
