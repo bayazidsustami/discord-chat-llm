@@ -48,7 +48,7 @@ jobs:
       - name: Create .env file
         run: |
           echo "Creating .env file on server..."
-          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ${{ secrets.SERVER_PATH }}/.env << ${{ secrets.ENV_CONTENT }} && echo 'Environment variables set successfully' || echo 'Failed to create .env file'"
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ${{ secrets.SERVER_PATH }}/.env << ${{ secrets.ENV_CONTENT }}"
           echo ".env file created successfully"
           
       - name: Checking sudo permissions...
