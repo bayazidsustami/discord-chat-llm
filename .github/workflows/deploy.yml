@@ -52,8 +52,22 @@ jobs:
       - name: Create .env file
         run: |
           echo "Creating .env file on server..."
-          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ${{ secrets.SERVER_PATH }}/.env << ${{ secrets.ENV_CONTENT }}"
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cat > ${{ secrets.SERVER_PATH }}/.env << EOL
+          DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+          BEDROCK_ACCESS_KEY_ID=${{ secrets.BEDROCK_ACCESS_KEY_ID }}
+          BEDROCK_SECRET_ACCESS_KEY=${{ secrets.BEDROCK_SECRET_ACCESS_KEY }}
+          BEDROCK_REGION=${{ secrets.BEDROCK_REGION }}
+          BEDROCK_DEFAULT_MODELS=${{ secrets.BEDROCK_DEFAULT_MODELS }}
+          EOL"
           echo ".env file created successfully"
+          
+      - name: Activate Python virtual environment
+        run: |
+          echo "Setting up Python environment with uv..."
+          ssh -i ~/.ssh/deploy_key.pem ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "cd ${{ secrets.SERVER_PATH }} && \
+          source .venv/bin/activate && \
+          uv pip install -e . && \
+          echo 'Virtual environment setup with uv complete'"
           
       - name: Checking sudo permissions...
         run: |
